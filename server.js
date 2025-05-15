@@ -9,8 +9,7 @@ dotenv.config();
 const app = express();
 
 // ✅ MongoDB Atlas
-const uri = "mongodb+srv://node:node@cluster0.tsfkb3f.mongodb.net/maBase?retryWrites=true&w=majority";
-console.log(process.env.PORT);
+const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/yourdbname'; // Remplacez par votre URI MongoDB
 
 // ✅ Connexion à MongoDB
 async function connectDB() {
@@ -30,9 +29,12 @@ connectDB();
 app.use(express.json());
 app.use(cors());
 
+// ✅ Importation des routes utilisateurs
+const userRoutes = require('./routes/userRoutes');
+app.use('/api/users', userRoutes); // Préfixe pour toutes les routes utilisateurs
+
 // ✅ Port du serveur
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
   console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
 });
