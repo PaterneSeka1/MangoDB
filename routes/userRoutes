@@ -20,4 +20,4 @@ router.put('/:id', userController.updateUser);
 // ✅ Supprimer un utilisateur
 router.delete('/:id', userController.deleteUser);
 
-module.exports = router;    
+module.exports = router;
