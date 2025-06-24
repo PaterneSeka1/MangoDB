@@ -141,12 +141,3 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
     }
 }
-// ✅ Exportation des fonctions
-// module.exports = {
-//   register,
-//   login,
-//   getAllUsers,
-//   getUserById,
-//   updateUser,
-//   deleteUser,
-// };

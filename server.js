@@ -33,6 +33,9 @@ app.use(cors());
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes); // Préfixe pour toutes les routes utilisateurs
 
+const postRoutes = require('./routes/postRoutes');
+app.use('/api/posts', postRoutes); // Préfixe pour toutes les routes posts
+
 // ✅ Port du serveur
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
