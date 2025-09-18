@@ -1,8 +1,9 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+require('dotenv').config(); // pour gérer SECRET_KEY depuis .env
 
-const SECRET_KEY = 'ton_secret_jwt'; // à sécuriser avec .env plus tard
+const SECRET_KEY = process.env.JWT_SECRET || "fallback_secret"; 
 
 // Inscription
 const registerUser = async (req, res) => {
@@ -22,9 +23,18 @@ const registerUser = async (req, res) => {
     });
 
     await newUser.save();
-    res.status(200).json({message: 'User Created successfully'});
+
+    // Optionnel : créer un token directement après inscription
+    const token = jwt.sign({ userId: newUser._id }, SECRET_KEY, { expiresIn: '1h' });
+
+    res.status(201).json({
+      message: 'User created successfully',
+      user: { id: newUser._id, firstname, lastname, email },
+      token
+    });
+
   } catch (err) {
-    res.status(500).json({ error: 'Erreur lors de l’enregistrement', err });
+    res.status(500).json({ error: 'Erreur lors de l’enregistrement' });
   }
 };
 
@@ -40,63 +50,84 @@ const loginUser = async (req, res) => {
     if (!isMatch) return res.status(400).json({ error: 'Mot de passe incorrect' });
 
     const token = jwt.sign({ userId: user._id }, SECRET_KEY, { expiresIn: '1h' });
-    res.json({ token, user: { firstname: user.firstname, lastname: user.lastname, email: user.email } });
+
+    res.json({
+      token,
+      user: { id: user._id, firstname: user.firstname, lastname: user.lastname, email: user.email }
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Erreur de connexion', err });
+    res.status(500).json({ error: 'Erreur de connexion' });
   }
 };
 
-const getAllUsers = async (req,res) =>{
+// Récupérer tous les users
+const getAllUsers = async (req, res) => {
   try {
     const userData = await User.find();
-    if(!userData || userData.length === 0){
-      return res.status(404).json({message: "User Data not found."});
+    if (!userData || userData.length === 0) {
+      return res.status(404).json({ message: "User Data not found." });
     }
     res.status(200).json(userData);
   } catch (error) {
-    res.status(500).json({errorMessage: error.message});
+    res.status(500).json({ errorMessage: error.message });
   }
-}
+};
 
-const getAllUserById = async (req,res) =>{
+// Récupérer un user par ID
+const getAllUserById = async (req, res) => {
   try {
     const id = req.params.id;
     const existUser = await User.findById(id);
-    if(!existUser){
-      return res.status(404).json({message: "User Data not found."});
+    if (!existUser) {
+      return res.status(404).json({ message: "User Data not found." });
     }
     res.status(200).json(existUser);
   } catch (error) {
-    res.status(500).json({errorMessage: error.message});
+    res.status(500).json({ errorMessage: error.message });
   }
-}
+};
 
-const update = async (req,res) =>{
+// Update user (avec re-hash si password modifié)
+const update = async (req, res) => {
   try {
     const id = req.params.id;
     const existUser = await User.findById(id);
-    if(!existUser){
-      return res.status(404).json({message: "User Data not found."});
-    }
-    const updatedData = await User.findByIdAndUpdate(id, req.body, { new:true})
-    res.status(200).json({message: 'User Updated successfully'});
-  } catch (error) {
-    res.status(500).json({errorMessage: error.message});
-  }
-}
 
-const deleteUser = async (req,res) =>{
+    if (!existUser) {
+      return res.status(404).json({ message: "User Data not found." });
+    }
+
+    let updatedData = { ...req.body };
+
+    // Si password est présent, on le hash
+    if (updatedData.password) {
+      updatedData.password = await bcrypt.hash(updatedData.password, 10);
+    }
+
+    await User.findByIdAndUpdate(id, updatedData, { new: true });
+
+    res.status(200).json({ message: 'User Updated successfully' });
+  } catch (error) {
+    res.status(500).json({ errorMessage: error.message });
+  }
+};
+
+// Supprimer un user
+const deleteUser = async (req, res) => {
   try {
     const id = req.params.id;
     const existUser = await User.findById(id);
-    if(!existUser){
-      return res.status(404).json({message: "User Data not found."});
+
+    if (!existUser) {
+      return res.status(404).json({ message: "User Data not found." });
     }
-    await User.findByIdAndDelete(id)
-    res.status(200).json({message: "User delete"});
+
+    await User.findByIdAndDelete(id);
+
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
-    res.status(500).json({errorMessage: error.message});
+    res.status(500).json({ errorMessage: error.message });
   }
-}
+};
 
 module.exports = { registerUser, loginUser, getAllUsers, getAllUserById, update, deleteUser };

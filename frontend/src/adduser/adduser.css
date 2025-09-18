@@ -34,3 +34,22 @@
     text-transform: uppercase;
     text-shadow: 1px 1px 9px rgba(0, 0, 0, 0.065);
 }
+
+/* Champ invalide = rouge */
+.invalid-input {
+  border: 2px solid red;
+  background-color: #ffe6e6;
+}
+
+/* Champ valide = vert */
+.valid-input {
+  border: 2px solid green;
+  background-color: #e6ffe6;
+}
+
+/* Message d'erreur */
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 5px;
+}

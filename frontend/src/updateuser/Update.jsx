@@ -15,6 +15,8 @@ const Update = () => {
     };
 
     const [user, setUser] = useState(users);
+    const [confirmPassword, setConfirmPassword] = useState(""); // champ de confirmation
+    const [passwordMatch, setPasswordMatch] = useState(null); // état pour suivi correspondance
 
     const navigate = useNavigate();
     const { id } = useParams();
@@ -26,8 +28,16 @@ const Update = () => {
             ...prevData,
             [name]:value
         }))
-        console.log(name, value)
     };
+
+    // Vérifie en temps réel si les mots de passe correspondent
+    useEffect(() => {
+        if (user.password || confirmPassword) {
+            setPasswordMatch(user.password === confirmPassword);
+        } else {
+            setPasswordMatch(null);
+        }
+    }, [user.password, confirmPassword]);
 
     useEffect (()=>{
         axios.get(`http://localhost:8008/api/auth/user/${id}`)
@@ -41,6 +51,13 @@ const Update = () => {
 
     const submitForm = async(e)=>{
         e.preventDefault();
+
+        // Vérification finale avant envoi
+        if (user.password && user.password !== confirmPassword) {
+            toast.error("Les mots de passe ne correspondent pas !");
+            return;
+        }
+
         await axios.put(`http://localhost:8008/api/auth/update/user/${id}`, user)
         .then((response)=>{
             toast.success(response.data.message, {position: "top-right"});
@@ -54,7 +71,9 @@ const Update = () => {
   return (
     <>
       <div className="addUser">
-        <Link to='/' type="button" className="btn btn-secondary"><i className="fa-solid fa-backward"></i> back</Link>
+        <Link to='/' type="button" className="btn btn-secondary">
+          <i className="fa-solid fa-backward"></i> back
+        </Link>
         <h3>Update User</h3>
         <form className="addUserForm" onSubmit={submitForm} action="">
           <div className="inputGroup">
@@ -82,7 +101,7 @@ const Update = () => {
             />
           </div>
           <div className="inputGroup">
-            <label htmlFor="email">email:</label>
+            <label htmlFor="email">Email:</label>
             <input
               type="email"
               id="email"
@@ -94,10 +113,10 @@ const Update = () => {
             />
           </div>
           <div className="inputGroup">
-            <label htmlFor="password">password:</label>
+            <label htmlFor="password">Password:</label>
             <input
               type="password"
-              id="email"
+              id="password"
               name="password"
               onChange={inputHandler}
               autoComplete="on"
@@ -105,7 +124,31 @@ const Update = () => {
             />
           </div>
           <div className="inputGroup">
-            <button type="submit" className="btn btn-primary" name="submit">submit</button>
+            <label htmlFor="confirmPassword">Confirm Password:</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={confirmPassword}
+              onChange={(e)=>setConfirmPassword(e.target.value)}
+              autoComplete="on"
+              placeholder="Confirm your password"
+            />
+            {passwordMatch === true && (
+              <p style={{ color: "green", fontSize: "14px" }}>Les mots de passe correspondent</p>
+            )}
+            {passwordMatch === false && (
+              <p style={{ color: "red", fontSize: "14px" }}>Les mots de passe ne correspondent pas</p>
+            )}
+          </div>
+          <div className="inputGroup">
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              disabled={passwordMatch === false} // bloque si mots de passe différents
+            >
+              Submit
+            </button>
           </div>
         </form>
       </div>
@@ -113,4 +156,4 @@ const Update = () => {
   );
 }
 
-export default Update
+export default Update;
